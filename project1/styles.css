@@ -59,6 +59,13 @@ h4 {
   margin-right: 20px;
 }
 
+.questions {
+  font-size: 20px;
+  margin-top: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
 .imageWrapper {
   display: flex;
   justify-content: space-around;
