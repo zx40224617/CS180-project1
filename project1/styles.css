@@ -1,4 +1,28 @@
+p {
+  font-size: 20px;
+  margin-bottom: 2vh;
+}
+
+h1 {
+  font-size: 50px;
+  margin-top: 30px;
+}
+
+h2 {
+  font-size: 32px;
+}
+
+h3 {
+  font-size: 26px;
+}
+
+h4 {
+  font-size: 23px;
+  margin-top: 20px;
+}
+
 .pageContents {
+  color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,4 +51,28 @@
 
 .SPG {
   margin-bottom: 50px;
+}
+
+.description {
+  margin-top: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.imageWrapper {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.resultImage {
+  height: 20vw;
+}
+
+.imageWrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
 }

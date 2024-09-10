@@ -24,6 +24,244 @@
         alt="Picture of Sergey Prokudin-Gorsky"
         class="SPG"
       />
+
+      <h2 class="title">How do we do it:</h2>
+      <h3>1. Process Image</h3>
+      <p class="description">
+        First and foremost, we need to read the images that are given to us. So
+        we can print it out to see what can we do with it. In my application, I
+        use matplotlib to read and show the image. And after reading the image,
+        we can print out the image that we are given.
+      </p>
+      <image
+        src="./images/cathedral_output.jpg"
+        alt="original given picture of Cathedral.jpg"
+      />
+      <p class="description">
+        Note that the filter from top to bottom are b, g, r. So now we need to
+        slice the images into 3 different part so that we can stack them
+        altogether. What we do here is simply divided the hieght of the original
+        image by 3 and them use index slicing to get the coresspoind part.
+      </p>
+      <div class="imageWrapper">
+        <div class="imageList">
+          <p class="description">blue filter:</p>
+          <image
+            src="./images/cathedral_output_b.jpg"
+            alt="original given picture of Cathedral with blue flter.jpg"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">green filter:</p>
+          <image
+            src="./images/cathedral_output_g.jpg"
+            alt="original given picture of Cathedral.jpg with green filter"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">red filter:</p>
+          <image
+            src="./images/cathedral_output_r.jpg"
+            alt="original given picture of Cathedral.jpg with red filter"
+            class="resultImage"
+          />
+        </div>
+      </div>
+
+      <p class="description">
+        And as you can see, there are some border around the images, which we
+        need to get rid of them or they will influence out later calculation.
+        Here I didn&#39;t implement anything special, but just crop all 4 sides
+        of the image by a fixed percentage (10 % in my case) of the image.
+      </p>
+      <p class="description">cropped image with blue filter:</p>
+
+      <image
+        src="./images/cathedral_output_b_cropped.jpg"
+        alt="original given picture of Cathedral.jpg with blue filter and cropped"
+      />
+
+      <p class="description">
+        After we finished processing all the 3 channels images, we can now start
+        with the next step
+      </p>
+
+      <h3 class="title">2. Brute Force Alignment:</h3>
+      <p class="description">
+        After we have pre-processed all of our images, we can noe tarting to
+        implement the technique to produce color photograph. The problem is, we
+        still need to align all the different channels before we can stack them.
+      </p>
+      <p class="description">
+        This is something you will get without any alignment:
+      </p>
+      <image
+        src="./images/cathedral_output_no_alignment.jpg"
+        alt="Picture of Sergey Prokudin-Gorsky"
+      />
+
+      <p class="description">
+        So what we need to do is that choose a base channel out of 3 as a
+        reference, and see how we can find the correct displacement of the other
+        2 channels baseon the base channel so they can be well aligned. The
+        esiest implementation is that we can go over a small window of search,
+        like [-15, 15] in my case. And try find the best displacement
+        exhuastively.
+      </p>
+      <p class="description">
+        How we check which one is the best displacement? The 2 naive ways are
+        calculating the euclidean distacne or NCC (Normalized Cross-Correlation)
+        between 2 images.
+      </p>
+      <div>
+        <p class="description">Euclidean Distance:</p>
+        <image
+          src="./images/cathedral_output_euclidean_alignment.jpg"
+          alt="Picture of Sergey Prokudin-Gorsky"
+        />
+        <p class="description">NCC:</p>
+        <image
+          src="./images/cathedral_output_NCC_alignment.jpg"
+          alt="Picture of Sergey Prokudin-Gorsky"
+        />
+      </div>
+
+      <h4>Summary:</h4>
+      <p class="description">
+        As we can see, NCC perform better than euclidean distance, this is
+        because Euclidean ditance directly calculate the pixel intesity between
+        2 images, which will be influenced a lot by brightness value. And NCC is
+        less senstive to this issue, so NCC is more robust in this case.
+      </p>
+
+      <h4>Potential Problem:</h4>
+      <p class="description">
+        The naive algorithm we implemented works fine as we just see, but the
+        problem is, what if we have a really large file with better solution of
+        the image like .tif files? Then the search window of this kind of image
+        may need to be [-100, 100] or even bigger. Which is not really
+        applicable and is really slow, so we need to improve our algorithm.
+      </p>
+
+      <h3 class="title">3. Image Pyramid Alignment</h3>
+      <p class="description">
+        In order to deal with bigger image files, we can implement an algorithm
+        called image pyramid. We first down sample the big image to a really
+        small one. And then we do the brute force search in a small window like
+        we did above. We then return the best displacement to the previous call
+        (one step bigger image), and inherit the displacement, and do the the
+        brute force search in a small window again. By repeating this process,
+        we can save a lot of computation force and time.
+      </p>
+      <image
+        src="./images/image_pyramid.png"
+        alt="Picture of Sergey Prokudin-Gorsky"
+      />
+
+      <h4>Some Notes:</h4>
+      <ul class="questions">
+        <li>
+          Depends on how much we down sample the image each time, we need to
+          adjust the inherited distance the same scale. Like in my application,
+          I down sample the image by 1/2 each time, so the inherited distacnes
+          need to times 2 when return to the previous call.
+        </li>
+        <li>
+          It is better to implement this algorithm using recursion since you
+          need to inherit the distance.
+        </li>
+        <li>
+          Everything wroks fine except for emir.tif. This is because I chose
+          blue filter as my base filter in every case. But the blue shirt of
+          Emir has has pixel value ≈ 1 in the blue filter, which will mess up
+          the calcuation in Euclidean and NCC. What we can do is that we can
+          simply just choose another filter as the base image, or implement SSIM
+          or edge detector. Unfortunately I have no extra time for that bell and
+          whistle.
+        </li>
+      </ul>
+
+      <h3 class="title">Some results:</h3>
+      <div class="imageWrapper">
+        <div class="imageList">
+          <p class="description">G shift: [8, 50] R shift: [-8, 116]</p>
+          <image
+            src="./images/churchNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral with blue flter.jpg"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">B shift: [-48, -98] R shift: [34, 114]</p>
+          <image
+            src="./images/emir_NCC_pyramid_alignment_gbase.jpg"
+            alt="original given picture of Cathedral.jpg with green filter"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">G shift: [32, 118] R shift: [26, 248]</p>
+          <image
+            src="./images/harvestersNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral.jpg with red filter"
+            class="resultImage"
+          />
+        </div>
+      </div>
+      <div class="imageWrapper">
+        <div class="imageList">
+          <p class="description">G shift: [34, 82] R shift: [46, 178]</p>
+          <image
+            src="./images/iconNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral with blue flter.jpg"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">G shift: [18, 102] R shift: [24, 222]</p>
+          <image
+            src="./images/ladyNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral.jpg with green filter"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">G shift: [20, 162] R shift: [26, 356]</p>
+          <image
+            src="./images/melonsNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral.jpg with red filter"
+            class="resultImage"
+          />
+        </div>
+      </div>
+      <div class="imageWrapper">
+        <div class="imageList">
+          <p class="description">G shift: [52, 102] R shift: [72, 216]</p>
+          <image
+            src="./images/onion_churchNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral with blue flter.jpg"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">G shift: [58, 156] R shift: [74, 352]</p>
+          <image
+            src="./images/self_portraitNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral.jpg with green filter"
+            class="resultImage"
+          />
+        </div>
+        <div class="imageList">
+          <p class="description">G shift: [28, 106] R shift: [22, 224]</p>
+          <image
+            src="./images/three_generationsNCC_pyramid_alignment.jpg"
+            alt="original given picture of Cathedral.jpg with red filter"
+            class="resultImage"
+          />
+        </div>
+      </div>
     </div>
   </body>
 </html>
